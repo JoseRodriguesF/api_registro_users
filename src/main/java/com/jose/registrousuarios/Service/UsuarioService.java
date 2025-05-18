@@ -22,6 +22,10 @@ public class UsuarioService {
 
     public UsuarioResponseDTO inserir(UsuarioRequestDTO dto) {
         try {
+            Optional<Usuario> usuarioExistente = usuarioRepository.findByEmail(dto.getEmail());
+            if (usuarioExistente.isPresent()) {
+                throw new RuntimeException("Email já cadastrado.");
+            }
             Usuario usuario = dto.toEntity();
             Usuario salvo = usuarioRepository.save(usuario);
             return UsuarioResponseDTO.fromEntity(salvo);

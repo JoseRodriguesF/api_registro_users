@@ -1,7 +1,9 @@
-
 package com.jose.registrousuarios.Controller;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 
 import com.jose.registrousuarios.DTO.UsuarioPatchDTO;
 import com.jose.registrousuarios.DTO.UsuarioRequestDTO;
@@ -25,43 +27,61 @@ public class UsuarioController {
 	public ResponseEntity<?> inserir(@RequestBody @Valid UsuarioRequestDTO usuarioDto) {
 		try {
 			UsuarioResponseDTO responseDto = usuarioService.inserir(usuarioDto);
-			return ResponseEntity.ok(responseDto);
-		} catch (Exception e) {
-			return ResponseEntity.badRequest().body("Não foi possível inserir o usuário: " + e.getMessage());
+			return ResponseEntity.status(200).body(responseDto);
+		} catch (RuntimeException e) {
+			return ResponseEntity.status(400).body("Não foi possível inserir o usuário: " + e.getMessage());
 		}
 	}
 
 	@GetMapping
-	public ResponseEntity<List<UsuarioResponseGetDTO>> listarUsers() {
+	public ResponseEntity<?> listarUsers() {
 		try {
 			List<UsuarioResponseGetDTO> listaDto = usuarioService.listarUsers();
-			return ResponseEntity.ok(listaDto);
+			if (listaDto.isEmpty()) {
+				Map<String, Object> response = new HashMap<>();
+				response.put("message", "Não existem usuários no banco.");
+				response.put("usuarios", listaDto);
+				return ResponseEntity.status(200).body(response);
+			}
+			return ResponseEntity.status(200).body(listaDto);
 		} catch (Exception e) {
 			return ResponseEntity.status(500).body(null);
 		}
 	}
 
 	@GetMapping("/{id}")
-	public ResponseEntity<UsuarioResponseGetDTO> buscarPorId(@PathVariable Long id) {
+	public ResponseEntity<?> buscarPorId(@PathVariable Long id) {
 		try {
-			return usuarioService.buscarPorId(id)
-					.map(ResponseEntity::ok)
-					.orElseGet(() -> ResponseEntity.notFound().build());
+			Optional<UsuarioResponseGetDTO> usuarioOpt = usuarioService.buscarPorId(id);
+			if (usuarioOpt.isPresent()) {
+				return ResponseEntity.status(200).body(usuarioOpt.get());
+			} else {
+				Map<String, String> response = new HashMap<>();
+				response.put("message", "Usuário com ID " + id + " não encontrado.");
+				return ResponseEntity.status(404).body(response);
+			}
 		} catch (Exception e) {
-			return ResponseEntity.status(500).body(null);
+			Map<String, String> error = new HashMap<>();
+			error.put("error", "Erro interno: " + e.getMessage());
+			return ResponseEntity.status(500).body(error);
 		}
 	}
+
 
 	@PutMapping("/{id}")
 	public ResponseEntity<?> alterar(@PathVariable Long id, @RequestBody @Valid UsuarioRequestDTO usuarioDto) {
 		try {
 			UsuarioResponseDTO dto = usuarioService.alterar(id, usuarioDto);
-			return ResponseEntity.ok(dto);
+			return ResponseEntity.status(200).body(dto);
 		} catch (RuntimeException e) {
 			if (e.getMessage().contains("não encontrado")) {
-				return ResponseEntity.notFound().build();
+				Map<String, String> response = new HashMap<>();
+				response.put("message", "Usuário com ID " + id + " não encontrado para atualização.");
+				return ResponseEntity.status(404).body(response);
 			}
-			return ResponseEntity.status(500).body("Erro ao alterar o usuário: " + e.getMessage());
+			Map<String, String> error = new HashMap<>();
+			error.put("error", "Erro ao alterar o usuário: " + e.getMessage());
+			return ResponseEntity.status(500).body(error);
 		}
 	}
 
@@ -69,12 +89,18 @@ public class UsuarioController {
 	public ResponseEntity<?> deletar(@PathVariable Long id) {
 		try {
 			usuarioService.deletar(id);
-			return ResponseEntity.ok("Usuário deletado com sucesso!");
+			Map<String, String> response = new HashMap<>();
+			response.put("message", "Usuário deletado com sucesso!");
+			return ResponseEntity.status(200).body(response);
 		} catch (RuntimeException e) {
 			if (e.getMessage().contains("não encontrado")) {
-				return ResponseEntity.notFound().build();
+				Map<String, String> response = new HashMap<>();
+				response.put("message", "Usuário com ID " + id + " não encontrado para deleção.");
+				return ResponseEntity.status(404).body(response);
 			}
-			return ResponseEntity.status(500).body("Erro ao deletar o usuário: " + e.getMessage());
+			Map<String, String> error = new HashMap<>();
+			error.put("error", "Erro ao deletar o usuário: " + e.getMessage());
+			return ResponseEntity.status(500).body(error);
 		}
 	}
 
@@ -82,12 +108,16 @@ public class UsuarioController {
 	public ResponseEntity<?> atualizarParcialmente(@PathVariable Long id, @RequestBody UsuarioPatchDTO patchDto) {
 		try {
 			UsuarioResponseDTO dto = usuarioService.atualizarParcialmente(id, patchDto);
-			return ResponseEntity.ok(dto);
+			return ResponseEntity.status(200).body(dto);
 		} catch (RuntimeException e) {
 			if (e.getMessage().contains("não encontrado")) {
-				return ResponseEntity.notFound().build();
+				Map<String, String> response = new HashMap<>();
+				response.put("message", "Usuário com ID " + id + " não encontrado para atualização parcial.");
+				return ResponseEntity.status(404).body(response);
 			}
-			return ResponseEntity.status(500).body("Erro ao atualizar parcialmente o usuário: " + e.getMessage());
+			Map<String, String> error = new HashMap<>();
+			error.put("error", "Erro ao atualizar parcialmente o usuário: " + e.getMessage());
+			return ResponseEntity.status(500).body(error);
 		}
 	}
 }
