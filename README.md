@@ -28,47 +28,147 @@ public class Usuario {
 
 ## DTOs
 
-Utilizei **DTOs (Data Transfer Objects)** para controlar a entrada e saída de dados nas requisições, garantindo que apenas as informações necessárias sejam expostas ou recebidas.
+São utilizados **DTOs (Data Transfer Objects)** para controlar a entrada e saída de dados nas requisições, garantindo que apenas as informações necessárias sejam expostas ou recebidas.
 
-Exemplo de DTO de entrada (cadastro ou atualização):
+- **DTO de entrada:**  
+  Utilizado para cadastro e atualização:
+  ```java
+  public class UsuarioRequestDTO {
+      private String nome;
+      private String email;
+      private String senha;
+  }
+  ```
 
-```java
-public class UsuarioRequestDTO {
-    private String nome;
-    private String email;
-    private String senha;
-}
-```
+- **DTO de entrada parcial:**  
+  Utilizado para atualização parcial (PATCH):
+  ```java
+  public class UsuarioPatchDTO {
+      private String nome;
+      private String email;
+      private String senha;
+  }
+  ```
 
-Exemplo de DTO de saída:
-
-```java
-public class UsuarioResponseDTO {
-    private Long id;
-    private String nome;
-    private String email;
-}
-```
-> **Nota:** A senha nunca deve ser exposta em DTOs de resposta.
+- **DTO de saída (resposta):**  
+  Nunca retorna a senha:
+  ```java
+  public class UsuarioResponseDTO {
+      private String nome;
+      private String email;
+  }
+  ```
+  ```java
+  public class UsuarioResponseGetDTO {
+      private Long id;
+      private String nome;
+      private String email;
+  }
+  ```
 
 ## Endpoints
 
-- `POST /usuarios` : Cadastrar um novo usuário.
-- `GET /usuarios` : Listar todos os usuários.
-- `GET /usuarios/{id}` : Buscar usuário pelo ID.
-- `PUT /usuarios/{id}` : Editar totalmente um usuário existente.
-- `PATCH /usuarios/{id}` : Editar parcialmente um usuário existente (atualização parcial de campos).
-- `DELETE /usuarios/{id}` : Excluir um usuário.
+- `POST /api/usuario` : Cadastrar um novo usuário.
+- `GET /api/usuario` : Listar todos os usuários.
+- `GET /api/usuario/{id}` : Buscar usuário pelo ID.
+- `PUT /api/usuario/{id}` : Editar totalmente um usuário existente.
+- `PATCH /api/usuario/{id}` : Editar parcialmente um usuário existente (atualização parcial de campos).
+- `DELETE /api/usuario/{id}` : Excluir um usuário.
 
-## Tratamento de Exceções
+## Tratamento de Erros e Respostas HTTP
 
-Foi implementado um tratamento básico de exceções para garantir respostas apropriadas em casos de erro, como usuário não encontrado ou dados inválidos.
+A API implementa tratamento de erros específico para cada situação, utilizando os status HTTP apropriados e mensagens descritivas:
+
+- **Validação de dados:**  
+  Se algum campo obrigatório estiver ausente ou inválido ao cadastrar/alterar, retorna `400 Bad Request` com uma mensagem explicando o erro.
+
+- **Usuário não encontrado:**  
+  Ao buscar, atualizar ou deletar um usuário inexistente, retorna `404 Not Found` com mensagem específica, por exemplo:
+  ```json
+  {
+    "message": "Usuário com ID 5 não encontrado."
+  }
+  ```
+  ou
+  ```json
+  {
+    "message": "Usuário com ID 7 não encontrado para deleção."
+  }
+  ```
+
+- **Erro interno:**  
+  Se ocorrer um erro inesperado, retorna `500 Internal Server Error` e uma mensagem informativa:
+  ```json
+  {
+    "error": "Erro ao alterar o usuário: <detalhe>"
+  }
+  ```
+
+- **Requisições bem-sucedidas:**  
+  - **Cadastro:** `201 Created` ou `200 OK` com o usuário criado (sem a senha).
+  - **Busca/atualização:** `200 OK` com os dados do usuário.
+  - **Deleção:** `200 OK` com mensagem de sucesso.
+  - **Lista vazia:** `200 OK` com mensagem `"Não existem usuários no banco."` e a lista vazia.
+
+### Exemplos de Respostas HTTP
+
+**Cadastro bem-sucedido:**
+```http
+HTTP/1.1 200 OK
+Content-Type: application/json
+
+{
+    "nome": "João Silva",
+    "email": "joao@email.com"
+}
+```
+
+**Busca com usuário inexistente:**
+```http
+HTTP/1.1 404 Not Found
+Content-Type: application/json
+
+{
+    "message": "Usuário com ID 15 não encontrado."
+}
+```
+
+**Erro de validação:**
+```http
+HTTP/1.1 400 Bad Request
+Content-Type: application/json
+
+"Não foi possível inserir o usuário: Email é obrigatório"
+```
+
+**Erro interno:**
+```http
+HTTP/1.1 500 Internal Server Error
+Content-Type: application/json
+
+{
+    "error": "Erro ao deletar o usuário: Falha inesperada"
+}
+```
+
+**Lista vazia:**
+```http
+HTTP/1.1 200 OK
+Content-Type: application/json
+
+{
+    "message": "Não existem usuários no banco.",
+    "usuarios": []
+}
+```
+
+> **Nota:** A senha nunca é retornada em nenhuma resposta.
 
 ## Como Executar
 
 1. **Clone o repositório:**
     ```bash
-    git clone https://github.com/seu-usuario/seu-repositorio.git
+    git clone https://github.com/JoseRodriguesF/api_registro_users.git
     ```
 2. **Configure o banco de dados MySQL:**
     - Crie um banco de dados e atualize o `application.properties` ou `application.yml` com suas credenciais.
@@ -85,7 +185,7 @@ Foi implementado um tratamento básico de exceções para garantir respostas apr
 ### Cadastro de Usuário
 
 ```http
-POST /usuarios
+POST /api/usuario
 Content-Type: application/json
 
 {
@@ -98,7 +198,7 @@ Content-Type: application/json
 ### Edição Parcial de Usuário
 
 ```http
-PATCH /usuarios/1
+PATCH /api/usuario/1
 Content-Type: application/json
 
 {
@@ -111,7 +211,6 @@ Content-Type: application/json
 
 ```json
 {
-    "id": 1,
     "nome": "João Silva",
     "email": "novoemail@email.com"
 }
