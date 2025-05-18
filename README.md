@@ -22,12 +22,34 @@ public class Usuario {
     private Long id;
     private String nome;
     private String email;
+    private String senha;
 }
 ```
 
 ## DTOs
 
 Utilizei **DTOs (Data Transfer Objects)** para controlar a entrada e saída de dados nas requisições, garantindo que apenas as informações necessárias sejam expostas ou recebidas.
+
+Exemplo de DTO de entrada (cadastro ou atualização):
+
+```java
+public class UsuarioRequestDTO {
+    private String nome;
+    private String email;
+    private String senha;
+}
+```
+
+Exemplo de DTO de saída:
+
+```java
+public class UsuarioResponseDTO {
+    private Long id;
+    private String nome;
+    private String email;
+}
+```
+> **Nota:** A senha nunca deve ser exposta em DTOs de resposta.
 
 ## Endpoints
 
@@ -68,7 +90,8 @@ Content-Type: application/json
 
 {
     "nome": "João Silva",
-    "email": "joao@email.com"
+    "email": "joao@email.com",
+    "senha": "senhaSuperSecreta"
 }
 ```
 
@@ -79,7 +102,8 @@ PATCH /usuarios/1
 Content-Type: application/json
 
 {
-    "email": "novoemail@email.com"
+    "email": "novoemail@email.com",
+    "senha": "novaSenha"
 }
 ```
 
@@ -92,6 +116,7 @@ Content-Type: application/json
     "email": "novoemail@email.com"
 }
 ```
+> **Nota:** A senha nunca é retornada na resposta.
 
 ## Contribuição
 
