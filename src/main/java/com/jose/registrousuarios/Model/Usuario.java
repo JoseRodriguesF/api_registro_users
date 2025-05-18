@@ -1,4 +1,4 @@
-package com.jose.datarelate.Model;
+package com.jose.registrousuarios.Model;
 
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
@@ -31,6 +31,7 @@ public class Usuario {
 
 	@Size(min = 6, max = 100, message = "Senha deve ter entre 6 e 100 caracteres")
 	@NotBlank(message = "Senha é obrigatória")
+
 	private String senha;
 
 }
